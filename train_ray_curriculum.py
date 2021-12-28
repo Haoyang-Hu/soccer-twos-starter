@@ -15,27 +15,28 @@ with open("curriculum.yaml") as f:
     curriculum = yaml.load(f, Loader=yaml.FullLoader)
 tasks = curriculum["tasks"]
 config_fns = {
-    "none": lambda: None,
-    "random_opponent": lambda env: env.set_opponent_policy(
+    "none": lambda *_: None,
+    "random_players": lambda env: env.set_policies(
         lambda *_: env.action_space.sample()
     ),
 }
 
 
-class SelfPlayUpdateCallback(DefaultCallbacks):
+class CurriculumUpdateCallback(DefaultCallbacks):
     def on_episode_start(
         self, *, worker, base_env, policies, episode, env_index, **kwargs
     ) -> None:
         global current, tasks
 
-        config_fns[tasks[current]["config_fn"]](base_env.get_unwrapped())
-        base_env.get_unwrapped().set_parameters(
-            ball_state=sample_pos_vel(tasks[current]["ranges"]["ball"]),
-            players_states={
-                player: sample_player(tasks[current]["ranges"]["players"][player])
-                for player in tasks[current]["ranges"]["players"]
-            },
-        )
+        for env in base_env.get_unwrapped():
+            config_fns[tasks[current]["config_fn"]](env)
+            env.env_channel.set_parameters(
+                ball_state=sample_pos_vel(tasks[current]["ranges"]["ball"]),
+                players_states={
+                    player: sample_player(tasks[current]["ranges"]["players"][player])
+                    for player in tasks[current]["ranges"]["players"]
+                },
+            )
 
     def on_train_result(self, **info):
         global current
@@ -61,10 +62,11 @@ if __name__ == "__main__":
         config={
             # system settings
             "num_gpus": 1,
-            "num_workers": 8,
+            "num_workers": 14,
             "num_envs_per_worker": NUM_ENVS_PER_WORKER,
             "log_level": "INFO",
             "framework": "torch",
+            "callbacks": CurriculumUpdateCallback,
             # RL setup
             "env": "Soccer",
             "env_config": {
