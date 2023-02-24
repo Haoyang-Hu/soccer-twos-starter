@@ -16,14 +16,14 @@ Example training/testing scripts for our [Soccer-Twos](https://github.com/bryano
 
 You may also run this environment [on Colab](https://colab.research.google.com/drive/1awcOdo8RU9UdaSRKuqUjvaOTF2O17-os?usp=sharing).
 
-## Tournament submission
+## Agent Packaging
 
-To submit an agent for the competition you must follow this instructions:
+To submit an agent for a Soccer-Twos competition you must follow this instructions:
 
 - Implement a class that inherits from `soccer_twos.AgentInterface` and implements an `act` method
 - Fill in your agent's information in the `README.md` file (agent name, authors & emails, and description)
 - Test your agent module as described in the next section
-- Compress your agent's module folder as `.zip` and e-mail it to bryanlmoliveira@gmail.com.
+- Compress your agent's module folder as `.zip`.
 
 See `example_player_agent/` or `example_team_agent/` module for reference.
 
