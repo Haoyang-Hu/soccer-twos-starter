@@ -40,7 +40,7 @@ class CurriculumUpdateCallback(DefaultCallbacks):
 
     def on_train_result(self, **info):
         global current
-        if info["result"]["episode_reward_mean"] > 1.0:
+        if info["result"]["episode_reward_mean"] > 1.5:
             if current < len(tasks) - 1:
                 print("---- Updating tasks!!! ----")
                 current += 1
@@ -85,8 +85,12 @@ if __name__ == "__main__":
             "rollout_fragment_length": 5000,
             "batch_mode": "complete_episodes",
         },
-        stop={"timesteps_total": 15000000, "time_total_s": 7200,},  # 2h
-        checkpoint_freq=100,
+        stop={
+            "timesteps_total": 15000000,
+            "time_total_s": 7200, # 2h
+            "episode_reward_mean": 1.9,
+        },
+        checkpoint_freq=5,
         checkpoint_at_end=True,
         local_dir="./ray_results",
         # restore="./ray_results/PPO_selfplay_twos_2/PPO_Soccer_a8b44_00000_0_2021-09-18_11-13-55/checkpoint_000600/checkpoint-600",
