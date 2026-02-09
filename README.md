@@ -35,6 +35,13 @@ pip install pydantic==1.10.13
 ### 5. Run `python example_random.py` to watch a random agent play the game
 python example_random_players.py
 
+### 6. Train using any of the example scripts
+python example_ray_ppo_sp_still.py
+
+python example_ray_team_vs_random.py
+
+etc.
+
 ## Agent Packaging
 
 To submit an agent for a Soccer-Twos competition you must follow this instructions:
