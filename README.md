@@ -9,12 +9,24 @@ Example training/testing scripts for our [Soccer-Twos](https://github.com/bryano
 
 ## Usage
 
-- Clone this repository
-- Install the requirements: `pip install -r requirements.txt`
-- Run `python example_random.py` to watch a random agent play the game
-- Run `python example_ray_team_vs_random.py` to train team vs team against a random agent using [Ray RLLib](https://docs.ray.io/en/latest/rllib.html)
+### 1. Clone this repository
 
-You may also run this environment [on Colab](https://colab.research.google.com/drive/1awcOdo8RU9UdaSRKuqUjvaOTF2O17-os?usp=sharing).
+### 2. Create and activate conda environment
+conda create --name soccertwos python=3.8 -y
+conda activate soccertwos
+
+### 3. Downgrade build tools for compatibility
+pip install pip==23.3.2 setuptools==65.5.0 wheel==0.38.4
+pip cache purge
+
+### 4. Install requirements
+pip install -r requirements.txt
+
+### 5. Fix protobuf compatibility
+pip install protobuf==3.20.3
+
+### 5. Run `python example_random.py` to watch a random agent play the game
+python example_random_players.py
 
 ## Agent Packaging
 
