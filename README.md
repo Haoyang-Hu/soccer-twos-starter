@@ -13,10 +13,12 @@ Example training/testing scripts for our [Soccer-Twos](https://github.com/bryano
 
 ### 2. Create and activate conda environment
 conda create --name soccertwos python=3.8 -y
+
 conda activate soccertwos
 
 ### 3. Downgrade build tools for compatibility
 pip install pip==23.3.2 setuptools==65.5.0 wheel==0.38.4
+
 pip cache purge
 
 ### 4. Install requirements
