@@ -27,8 +27,10 @@ pip cache purge
 ### 4. Install requirements
 pip install -r requirements.txt
 
-### 5. Fix protobuf compatibility
+### 5. Fix protobuf and pydantic compatibility
 pip install protobuf==3.20.3
+
+pip install pydantic==1.10.13
 
 ### 5. Run `python example_random.py` to watch a random agent play the game
 python example_random_players.py
