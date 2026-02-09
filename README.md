@@ -10,6 +10,9 @@ Example training/testing scripts for our [Soccer-Twos](https://github.com/bryano
 ## Usage
 
 ### 1. Clone this repository
+git clone https://github.com/mdas64/soccer-twos-starter.git
+
+cd soccer-twos-starter/
 
 ### 2. Create and activate conda environment
 conda create --name soccertwos python=3.8 -y
