@@ -1,6 +1,8 @@
 # Soccer-Twos Starter Kit
 
-Example training/testing scripts for our [Soccer-Twos](https://github.com/bryanoliveira/soccer-twos-env) environment.
+Example training/testing scripts for the Soccer-Twos environment. This starter code is modified from the example code provided in https://github.com/bryanoliveira/soccer-twos-starter.
+
+Environment-level specification code can be found at https://github.com/bryanoliveira/soccer-twos-env, which may also be useful to reference.
 
 ## Requirements
 
@@ -44,21 +46,31 @@ etc.
 
 ## Agent Packaging
 
-To submit an agent for a Soccer-Twos competition you must follow this instructions:
+To receive full credit on the assignment and ensure the teaching staff can properly compile your code, you must follow these instructions:
 
-- Implement a class that inherits from `soccer_twos.AgentInterface` and implements an `act` method
+- Implement a class that inherits from `soccer_twos.AgentInterface` and implements an `act` method. Examples are located under the `example_player_agent/` or `example_team_agent/` directories.
 - Fill in your agent's information in the `README.md` file (agent name, authors & emails, and description)
-- Test your agent module as described in the next section
-- Compress your agent's module folder as `.zip`.
+- Compress each agent's module folder as `.zip`.
 
-See `example_player_agent/` or `example_team_agent/` module for reference.
+*Submission Policy*: Students must submit multiple trained agents to meet all assignment requirements. In both the agent desription and the report, clearly identify which agent file corresponds to each evaluation criterion (e.g., Agent1 – policy performance, Agent2 – reward modification, Agent3 – imitation learning, etc.). 
+
+Training plots are required for every agent that is discussed or submitted. Additionally, include a direct performance comparison across agents, such as overlaid learning curves, to support your analysis.
+
 
 ## Testing/Evaluating
 
-Use the environment's rollout tool to test your module before submission:
+Use the environment's rollout tool to test the example agent module:
 
 `python -m soccer_twos.watch -m example_player_agent`
 
-You may also run your agent against our [pre-trained baseline (download)](https://drive.google.com/file/d/1WEjr48D7QG9uVy1tf4GJAZTpimHtINzE/view?usp=sharing). Extract the `ceia_baseline_agent` folder to this project's folder and run:
+Similarly, you can test your own agent by replacing `example_player_agent` with the name of your agent directory.
+
+The baseline agent is located here: [pre-trained baseline (download)](https://drive.google.com/file/d/1WEjr48D7QG9uVy1tf4GJAZTpimHtINzE/view?usp=sharing).
+To examine the baseline agent, you must extract the `ceia_baseline_agent` folder to this project's folder. For instance you can run, 
 
 `python -m soccer_twos.watch -m1 example_player_agent -m2 ceia_baseline_agent`
+
+, to examine the random agent vs. the baseline agent.
+
+
+
