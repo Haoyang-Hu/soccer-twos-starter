@@ -11,8 +11,9 @@ Environment-level specification code can be found at https://github.com/bryanoli
 
 ## Usage
 
-### 1. Clone this repository
-git clone https://github.com/mdas64/soccer-twos-starter.git
+### 1. Fork this repository
+
+git clone https://github.com/your-github-user/soccer-twos-starter.git
 
 cd soccer-twos-starter/
 
