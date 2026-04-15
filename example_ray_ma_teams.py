@@ -1,3 +1,12 @@
+# PPO training: both teams share one policy (naive team-level self-play)
+#
+# - Env variation: multiagent_team (RLlib controls both teams; each team is one agent)
+# - Algorithm: PPO with a single shared "default" policy for both teams
+# - Multiagent: Yes — but at the team level, not individual players
+# - Compared to example_ray_ma_players.py: observations and actions are aggregated
+#   per team rather than per player, so the policy sees/controls both players at once
+# - Self-play: naive — same policy plays both sides; no frozen snapshot pool
+
 import ray
 from ray import tune
 from soccer_twos import EnvType

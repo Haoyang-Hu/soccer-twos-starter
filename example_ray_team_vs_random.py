@@ -1,3 +1,12 @@
+# PPO training: team controller vs random opponent
+#
+# - Env variation: team_vs_policy (your agent controls both players on one team)
+# - Algorithm: PPO with MultiDiscrete action space
+# - Multiagent: No — the team is treated as a single agent by RLlib
+# - Opponent: random policy (takes random actions every step)
+# - Compared to ppo_sp_still: harder task — opponent now moves unpredictably,
+#   forcing the agent to learn to handle a non-trivial adversary
+
 import ray
 from ray import tune
 from soccer_twos import EnvType

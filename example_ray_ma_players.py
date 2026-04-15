@@ -1,3 +1,12 @@
+# PPO training: all 4 players share one policy (naive self-play)
+#
+# - Env variation: multiagent_player (RLlib controls all 4 players individually)
+# - Algorithm: PPO with a single shared "default" policy for all agents
+# - Multiagent: Yes — RLlib manages 4 agents; all mapped to the same policy
+# - Self-play: naive — the opponent is always the current version of the policy,
+#   which can lead to forgetting or cycling; see train_ray_selfplay.py for a more
+#   robust approach using a frozen snapshot pool
+
 import ray
 from ray import tune
 from soccer_twos import EnvType

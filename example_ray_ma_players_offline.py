@@ -1,3 +1,15 @@
+# PPO training: offline learning from pre-recorded gameplay data (no live env)
+#
+# - Env variation: multiagent_player (used only to infer obs/action spaces; env not used during training)
+# - Algorithm: PPO in offline mode — reads experience data from disk instead of rolling out episodes
+# - Multiagent: Yes — same policy structure as example_ray_ma_players.py
+# - "input": path to a directory of pre-recorded episode data (JSON/SampleBatch files)
+# - "explore": False — no exploration since we're replaying fixed data
+# - "input_evaluation": [] — disables off-policy correction (OPE) checks
+# - Use this when you have a dataset of gameplay and want to bootstrap a policy
+#   without running the Unity simulator during training
+# - NOTE: the input path is hardcoded to the original author's machine and must be updated
+
 import ray
 from ray import tune
 from soccer_twos import EnvType

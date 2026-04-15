@@ -1,3 +1,12 @@
+# PPO training: single player vs still opponent
+#
+# - Env variation: team_vs_policy (your agent controls 1 player; opponent does nothing)
+# - Algorithm: PPO with MultiDiscrete action space (no flattening needed unlike DQN)
+# - Multiagent: No — env appears as a standard single-agent gym env to RLlib
+# - Opponent: fixed, always takes action 0 (does nothing)
+# - Compared to example_ray_dqn_sp.py: same setup but uses PPO instead of DQN,
+#   with a larger batch size and explicit rollout_fragment_length for stability
+
 import ray
 from ray import tune
 from soccer_twos import EnvType

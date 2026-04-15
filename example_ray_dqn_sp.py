@@ -1,3 +1,11 @@
+# DQN training: single player vs still opponent
+#
+# - Env variation: team_vs_policy (your agent controls 1 player; opponent does nothing)
+# - Algorithm: DQN (requires flattened Discrete action space via flatten_branched=True)
+# - Multiagent: No — env appears as a standard single-agent gym env to RLlib
+# - Opponent: fixed, always takes action 0 (does nothing)
+# - Good starting point: simplest possible setup to get a policy learning to score
+
 import ray
 from ray import tune
 from soccer_twos import EnvType
@@ -5,7 +13,7 @@ from soccer_twos import EnvType
 from utils import create_rllib_env
 
 
-NUM_ENVS_PER_WORKER = 5
+NUM_ENVS_PER_WORKER = 1 # 5
 
 
 if __name__ == "__main__":
@@ -18,8 +26,8 @@ if __name__ == "__main__":
         name="DQN_1",
         config={
             # system settings
-            "num_gpus": 1,
-            "num_workers": 8,
+            "num_gpus": 0,
+            "num_workers": 2,
             "num_envs_per_worker": NUM_ENVS_PER_WORKER,
             "log_level": "INFO",
             "framework": "torch",
@@ -37,7 +45,7 @@ if __name__ == "__main__":
             },
         },
         stop={
-            "timesteps_total": 20000000,  # 20M
+            "timesteps_total": 10000, #20000000,  # 20M
             # "time_total_s": 14400, # 4h
         },
         checkpoint_freq=100,

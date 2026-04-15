@@ -1,3 +1,16 @@
+# PPO training: true self-play with a frozen snapshot policy pool
+#
+# - Env variation: multiagent_player (default; RLlib controls all 4 players)
+# - Algorithm: PPO with 4 policies: "default" (trained) + "opponent_1/2/3" (frozen snapshots)
+# - Multiagent: Yes — agent 0 always uses "default"; agents 1-3 are randomly drawn
+#   from the snapshot pool with probabilities [0.50, 0.25, 0.125, 0.125]
+# - Self-play: robust — SelfPlayUpdateCallback watches episode_reward_mean; when it
+#   exceeds 0.5, it shifts weights: default → opponent_1 → opponent_2 → opponent_3,
+#   preserving a rolling history of past selves as opponents
+# - This prevents forgetting and cycling that naive self-play suffers from, since
+#   the trained policy must beat multiple past versions of itself, not just the current one
+# - Most sophisticated training script in this repo; recommended for serious training
+
 import numpy as np
 import ray
 from ray import tune
