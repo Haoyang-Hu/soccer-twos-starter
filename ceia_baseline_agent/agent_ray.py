@@ -6,7 +6,7 @@ import gym
 import numpy as np
 import ray
 from ray import tune
-from ray.rllib.env.base_env import BaseEnv
+from ray.rllib import MultiAgentEnv
 from ray.tune.registry import get_trainable_cls
 
 from soccer_twos import AgentInterface
@@ -56,18 +56,36 @@ class RayAgent(AgentInterface):
         # no need for parallelism on evaluation
         config["num_workers"] = 0
         config["num_gpus"] = 0
+        config["disable_env_checking"] = True
 
-        # create a dummy env since it's required but we only care about the policy
-        tune.registry.register_env("DummyEnv", lambda *_: BaseEnv())
+        # create a dummy MultiAgentEnv with correct spaces so Ray can
+        # determine policy observation/action spaces without a real env
+        obs_space = env.observation_space
+        act_space = env.action_space
+
+        class DummyEnv(MultiAgentEnv):
+            observation_space = obs_space
+            action_space = act_space
+
+            def reset(self):
+                return {0: self.observation_space.sample()}
+
+            def step(self, action):
+                return {}, {}, {"__all__": True}, {}
+
+        tune.registry.register_env("DummyEnv", lambda *_: DummyEnv())
         config["env"] = "DummyEnv"
 
         # create the Trainer from config
         cls = get_trainable_cls(ALGORITHM)
         agent = cls(env=config["env"], config=config)
-        # load state from checkpoint
-        agent.restore(CHECKPOINT_PATH)
-        # get policy for evaluation
+        # load weights from Ray 1.4 checkpoint (format differs from Ray 1.13's restore())
+        with open(CHECKPOINT_PATH, "rb") as f:
+            ckpt = pickle.load(f)
+        weights = pickle.loads(ckpt["worker"])["state"][POLICY_NAME]
+        weights.pop("_optimizer_variables", None)
         self.policy = agent.get_policy(POLICY_NAME)
+        self.policy.set_weights(weights)
 
     def act(self, observation: Dict[int, np.ndarray]) -> Dict[int, np.ndarray]:
         """The act method is called when the agent is asked to act.
