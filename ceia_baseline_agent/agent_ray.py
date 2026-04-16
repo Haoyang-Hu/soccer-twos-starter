@@ -24,7 +24,7 @@ class RayAgent(AgentInterface):
     """
     RayAgent is an agent that uses ray to train a model.
     """
-
+    
     def __init__(self, env: gym.Env):
         """Initialize the RayAgent.
         Args:
@@ -32,6 +32,7 @@ class RayAgent(AgentInterface):
         """
         super().__init__()
         ray.init(ignore_reinit_error=True)
+        self.name = "CEIA"
 
         # Load configuration from checkpoint file.
         config_path = ""
