@@ -15,7 +15,8 @@
       "Bash(taskkill //F //PID 18916)",
       "Bash(taskkill //F //PID 7268)",
       "Bash(cmd //c \"taskkill /F /PID 18916 /T & taskkill /F /PID 7268 /T\")",
-      "Bash(powershell -Command \"Get-Process UnityEnvironment,UnityCrashHandler64 -ErrorAction SilentlyContinue | Stop-Process -Force; Start-Sleep -Seconds 1; Get-Process soccer*,unity*,raylet* -ErrorAction SilentlyContinue | Format-Table ProcessName,Id\")"
+      "Bash(powershell -Command \"Get-Process UnityEnvironment,UnityCrashHandler64 -ErrorAction SilentlyContinue | Stop-Process -Force; Start-Sleep -Seconds 1; Get-Process soccer*,unity*,raylet* -ErrorAction SilentlyContinue | Format-Table ProcessName,Id\")",
+      "Bash(conda run -n soccertwos python -c ' *)"
     ]
   }
 }
