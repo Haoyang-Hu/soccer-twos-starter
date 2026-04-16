@@ -14,12 +14,12 @@ from soccer_twos import EnvType
 from utils import create_rllib_env
 
 
-# NUM_ENVS_PER_WORKER = 5  # original
-NUM_ENVS_PER_WORKER = 2  # tuned for 6C/12T, 16GB RAM, GTX 1660 Ti 6GB
+NUM_ENVS_PER_WORKER = 4  # original
+# NUM_ENVS_PER_WORKER = 2  # tuned for 6C/12T, 16GB RAM, GTX 1660 Ti 6GB
 
 
 if __name__ == "__main__":
-    ray.init()
+    ray.init(include_dashboard=False)
 
     tune.registry.register_env("Soccer", create_rllib_env)
 
@@ -55,7 +55,7 @@ if __name__ == "__main__":
             "num_sgd_iter": 10,
         },
         stop={
-            "timesteps_total": 4_000_000, #20000000,  # 15M
+            "timesteps_total": 20_000_000, #20000000,  # 15M
             # "time_total_s": 14400, # 4h
         },
         checkpoint_freq=100,

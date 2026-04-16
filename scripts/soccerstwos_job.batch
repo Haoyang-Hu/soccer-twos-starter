@@ -8,16 +8,17 @@
 # Replace the training script name with the actual script you want to run.
 
 #SBATCH --job-name=soccerstwos
-#SBATCH -N4 --ntasks-per-node=8
-#SBATCH --mem-per-cpu=6G
+#SBATCH -N1
+#SBATCH --cpus-per-task=16
+#SBATCH --mem=64G
 #SBATCH -t12:00:00
 #SBATCH --output=soccerstwos-%j.out
 #SBATCH --mail-type=BEGIN,END,FAIL
-#SBATCH --mail-user=gburbell3@gatech.edu
+#SBATCH --mail-user=hhu349@gatech.edu
 
-source ~/miniconda3/etc/profile.d/conda.sh
+source ~/.conda/etc/profile.d/conda.sh
 conda activate soccerstwos
 
 # Run the training script
-python example_ray_ppo_sp_still.py
+python example_ray_team_vs_random.py
 
