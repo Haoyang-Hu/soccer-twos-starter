@@ -14,7 +14,8 @@ from soccer_twos import EnvType
 from utils import create_rllib_env
 
 
-NUM_ENVS_PER_WORKER = 5
+# NUM_ENVS_PER_WORKER = 5  # original
+NUM_ENVS_PER_WORKER = 2  # tuned for 6C/12T, 16GB RAM, GTX 1660 Ti 6GB
 
 
 if __name__ == "__main__":
@@ -27,8 +28,12 @@ if __name__ == "__main__":
         name="PPO_1",
         config={
             # system settings
-            "num_gpus": 1,
-            "num_workers": 8,
+            # original: "num_gpus": 1, "num_workers": 8, "num_envs_per_worker": 5
+            # note: num_gpus=0 — Ray 1.4 + torch has a bug where workers crash
+            # with IndexError at torch_policy.py:155 when num_gpus>0 on the trainer.
+            # CPU training is fine here since the MLP is small and Unity sim is the bottleneck.
+            "num_gpus": 0,
+            "num_workers": 4,
             "num_envs_per_worker": NUM_ENVS_PER_WORKER,
             "log_level": "INFO",
             "framework": "torch",
@@ -43,9 +48,14 @@ if __name__ == "__main__":
                 "vf_share_layers": True,
                 "fcnet_hiddens": [512, 512],
             },
+            # original: defaults (rollout_fragment_length=200, train_batch_size=4000)
+            "rollout_fragment_length": 500,
+            "train_batch_size": 4000,
+            "sgd_minibatch_size": 512,
+            "num_sgd_iter": 10,
         },
         stop={
-            "timesteps_total": 20000000,  # 15M
+            "timesteps_total": 4_000_000, #20000000,  # 15M
             # "time_total_s": 14400, # 4h
         },
         checkpoint_freq=100,

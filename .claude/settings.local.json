@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(where python *)",
+      "Bash(pip show *)",
+      "Bash(conda env *)",
+      "Bash(C:/Users/29084/.conda/envs/soccertwos/python.exe -c \"import ray, soccer_twos, torch; print\\('ray', ray.__version__\\); print\\('torch', torch.__version__\\); print\\('cuda', torch.cuda.is_available\\(\\)\\)\")",
+      "Bash(C:/Users/29084/.conda/envs/soccertwos/python.exe -c \"import ray; print\\('ray', ray.__version__\\); import soccer_twos; print\\('soccer_twos ok'\\); import tensorflow as tf; print\\('tf', tf.__version__\\)\")",
+      "Bash(C:/Users/29084/.conda/envs/soccertwos/python.exe -m pip install torch==1.8.1+cu111 torchvision==0.9.1+cu111 -f https://download.pytorch.org/whl/torch_stable.html)",
+      "Bash(C:/Users/29084/.conda/envs/soccertwos/python.exe example_ray_team_vs_random.py)",
+      "Bash(tee /tmp/ppo_run.log)",
+      "Bash(C:/Users/29084/.conda/envs/soccertwos/python.exe example_random_players.py)",
+      "Bash(powershell -Command \"Get-Process soccer*,unity*,raylet* -ErrorAction SilentlyContinue | Format-Table ProcessName,Id\")",
+      "Bash(powershell -Command \"Stop-Process -Id 18916,7268 -Force -ErrorAction SilentlyContinue; Get-Process soccer*,unity*,raylet* -ErrorAction SilentlyContinue | Format-Table ProcessName,Id\")",
+      "Bash(taskkill //F //PID 18916)",
+      "Bash(taskkill //F //PID 7268)",
+      "Bash(cmd //c \"taskkill /F /PID 18916 /T & taskkill /F /PID 7268 /T\")",
+      "Bash(powershell -Command \"Get-Process UnityEnvironment,UnityCrashHandler64 -ErrorAction SilentlyContinue | Stop-Process -Force; Start-Sleep -Seconds 1; Get-Process soccer*,unity*,raylet* -ErrorAction SilentlyContinue | Format-Table ProcessName,Id\")"
+    ]
+  }
+}
