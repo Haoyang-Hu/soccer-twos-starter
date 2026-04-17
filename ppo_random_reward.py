@@ -57,10 +57,8 @@
 # when missing (e.g. on reset) shaping is silently skipped.
 #
 # ============================================================================
-# OPPONENT: random (no curriculum)
+# OPPONENT: random
 # ============================================================================
-# A previous version of this file used a curriculum (still → random →
-# frozen-self) but training collapsed when promoting from still → random.
 # This file isolates the random-opponent stage to verify steady training
 # end-to-end. Matches example_ray_team_vs_random.py, which trained
 # successfully on PACE.
