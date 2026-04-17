@@ -15,7 +15,7 @@ from soccer_twos import AgentInterface
 ALGORITHM = "DQN"
 CHECKPOINT_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
-    "../ray_results/DQN_1/DQN_Soccer_393f4_00000_0_2026-04-15_17-01-07/checkpoint_000010/checkpoint-10",
+    "ray_results/DQN_1/checkpoint_000010/checkpoint-10",
 )
 POLICY_NAME = "default_policy"
 

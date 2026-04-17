@@ -57,6 +57,7 @@ class RayAgent(AgentInterface):
         # no need for parallelism on evaluation
         config["num_workers"] = 0
         config["num_gpus"] = 0
+        config["disable_env_checking"] = True
 
         # create a dummy MultiAgentEnv with correct spaces so Ray can
         # determine policy observation/action spaces without a real env
@@ -64,6 +65,7 @@ class RayAgent(AgentInterface):
         act_space = env.action_space
 
         class DummyEnv(MultiAgentEnv):
+            _agent_ids = {0}  # required by Ray 1.13 MultiAgentEnv env checker
             observation_space = obs_space
             action_space = act_space
 

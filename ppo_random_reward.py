@@ -37,7 +37,7 @@ import soccer_twos
 from soccer_twos import EnvType
 
 
-NUM_ENVS_PER_WORKER = 2
+NUM_ENVS_PER_WORKER = 1
 
 
 # ---------------------------------------------------------------------------
@@ -263,7 +263,7 @@ if __name__ == "__main__":
             # num_gpus=0: Ray 1.13+torch has a bug where workers crash with
             # IndexError at torch_policy.py:155 when num_gpus>0 on the trainer.
             "num_gpus": 0,
-            "num_workers": 4,
+            "num_workers": 1,
             "num_envs_per_worker": NUM_ENVS_PER_WORKER,
             "log_level": "INFO",
             "framework": "torch",
