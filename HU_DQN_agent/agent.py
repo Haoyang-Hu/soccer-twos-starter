@@ -45,7 +45,6 @@ class DQNAgent(AgentInterface):
         # no need for parallelism on evaluation
         config["num_workers"] = 0
         config["num_gpus"] = 0
-        config["disable_env_checking"] = True
         config["explore"] = False
 
         # DQN was trained as single-agent with flatten_branched=True,

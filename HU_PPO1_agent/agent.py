@@ -45,7 +45,6 @@ class PPO1Agent(AgentInterface):
         # no need for parallelism on evaluation
         config["num_workers"] = 0
         config["num_gpus"] = 0
-        config["disable_env_checking"] = True
         config["explore"] = False
         # remove unpicklable/unneeded opponent_policy lambda from env_config
         config.get("env_config", {}).pop("opponent_policy", None)

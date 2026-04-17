@@ -267,7 +267,7 @@ if __name__ == "__main__":
             "num_envs_per_worker": NUM_ENVS_PER_WORKER,
             "log_level": "INFO",
             "framework": "torch",
-            "disable_env_checking": True,
+            # "disable_env_checking": True,  # not supported in Ray 1.4
             "callbacks": OpponentCurriculumCallback,
             # RL setup
             "env": "SoccerShaped",
