@@ -6,6 +6,7 @@
 # - Opponent: random policy (takes random actions every step)
 # - Compared to ppo_sp_still: harder task — opponent now moves unpredictably,
 #   forcing the agent to learn to handle a non-trivial adversary
+#   Trained
 
 import ray
 from ray import tune

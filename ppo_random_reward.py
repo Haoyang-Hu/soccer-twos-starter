@@ -1,38 +1,89 @@
-# PPO training with shaped rewards and opponent curriculum
+# PPO training with shaped rewards vs random opponent
 #
-# BASE REWARD (from Unity, via TeamVsPolicyWrapper):
-#   Each player receives +1 when their team scores, -1 when the opponent scores, 0 otherwise.
-#   TeamVsPolicyWrapper sums both players: total base = +2 / -2 / 0.
-#   This signal is purely sparse — only fires at goal events.
+# ============================================================================
+# AGENT STRUCTURE: one team = one agent (NOT one player = one agent)
+# ============================================================================
+# EnvType.team_vs_policy + multiagent=False routes through TeamVsPolicyWrapper
+# (soccer_twos/wrappers.py:448), which presents the two blue players as a
+# single RLlib agent:
 #
-# SHAPED REWARD (added on top of base each step):
-#   1. Ball-toward-goal  (+0.005 × Δball_x): dense reward for moving ball toward opponent goal
-#   2. Ball-zone         (+0.002 × ball_x/17): continuous bonus when ball is in opponent half,
-#                         penalty when in own half — treats the field as a rectangle where
-#                         x = +17 is opponent goal and x = -17 is own goal
-#   3. Stillness penalty (-0.001/step): discourages standing still
+#   observation_space = Box(shape=(672,))           # 336 (player 0) ⊕ 336 (player 1)
+#   action_space      = MultiDiscrete([3,3,3,3,3,3]) # 3 branches × 2 players
+#
+# On each step the wrapper splits the 6-dim joint action: indices [0:3] go to
+# player 0, indices [3:6] go to player 1. Both teammates share the same policy
+# weights and observe each other's state, so coordination is learned implicitly
+# through the shared encoder rather than via emergent multi-agent communication.
+#
+# The orange team is driven by `opponent_policy` (random here, see env_config
+# below) and is NOT learned. RLlib only sees one policy ("default_policy")
+# producing one joint action per step.
+#
+# (For per-player learning you would use EnvType.multiagent_player with
+# multiagent=True, which exposes RLlib's MultiAgentEnv interface — not used here.)
+#
+# ============================================================================
+# BASE REWARD (from Unity, via TeamVsPolicyWrapper)
+# ============================================================================
+# Each player receives +1 when their team scores, -1 when the opponent scores,
+# 0 otherwise. TeamVsPolicyWrapper sums both players: total base = +2 / -2 / 0.
+# This signal is purely sparse — only fires at goal events, which can be tens
+# of seconds apart, making credit assignment hard without shaping.
+#
+# ============================================================================
+# SHAPED REWARD (added on top of base each step, see RewardShaperWrapper)
+# ============================================================================
+#   1. Ball-toward-goal  (+0.005 × Δball_x): potential-based dense reward for
+#                         moving the ball toward the opponent goal. Because
+#                         it is potential-based (F = Φ(s') − Φ(s)) it does not
+#                         change the optimal policy, only learning speed.
+#   2. Ball-zone         (+0.002 × ball_x/17): continuous bonus when ball is
+#                         in opponent half, penalty in own half. Encourages
+#                         possession in the attacking third.
+#   3. Stillness penalty (-0.001/step): discourages player 0 from idling
+#                         (speed < 0.1 m/s). Counters a degenerate strategy
+#                         where standing still gives 0 reward, which is locally
+#                         optimal under sparse goal feedback.
 #
 #   Scale: shaping maxes at ~0.007/step vs ±2 for a goal → ~0.35% per step,
-#   small enough not to dominate but dense enough to guide exploration.
+#   small enough not to dominate the true objective but dense enough to guide
+#   exploration in the first ~1M steps before the agent starts scoring.
 #
-# OPPONENT CURRICULUM (staged difficulty):
-#   Stage 0: still opponent      — [0,0,0] = no movement, easiest baseline
-#   Stage 1: random opponent     — promotes at episode_reward_mean > 0.5
-#   Stage 2: frozen-self         — promotes at episode_reward_mean > 1.0,
-#                                   uses a snapshot of the current policy weights
+# Coordinates (Soccer-Twos): position is 2-D (x, z) on the ground plane;
+# blue attacks toward +x, orange toward −x; field ≈ x ∈ [-17, 17], z ∈ [-7, 7].
 #
-# Env variation: team_vs_policy (agent controls both players on blue team)
-# Action space: MultiDiscrete([3,3,3,3,3,3]) — no flattening
-# Observation: 672 (336 per player, concatenated)
-
-import copy
+# Shaping requires `info["ball_info"]` and `info["player_info"]`, which the
+# binary only emits when sending the 345-dim per-player obs (training env);
+# when missing (e.g. on reset) shaping is silently skipped.
+#
+# ============================================================================
+# OPPONENT: random (no curriculum)
+# ============================================================================
+# A previous version of this file used a curriculum (still → random →
+# frozen-self) but training collapsed when promoting from still → random.
+# This file isolates the random-opponent stage to verify steady training
+# end-to-end. Matches example_ray_team_vs_random.py, which trained
+# successfully on PACE.
+#
+# soccer_twos defaults `opponent_policy` to `env.action_space.sample()` when
+# the key is omitted from env_config (wrappers.py:495), so we don't pass it
+# explicitly.
+#
+# ============================================================================
+# RLlib config notes
+# ============================================================================
+# - num_gpus=0: Ray 1.13 + torch has a bug where workers crash with
+#   IndexError at torch_policy.py:155 when num_gpus>0 on the trainer.
+#   The MLP is small and the Unity sim is the bottleneck, so CPU is fine.
+# - num_workers=16: each worker spawns its own Unity binary, so memory and
+#   CPU scale linearly. Reduce on smaller machines.
+# - train_batch_size=8000, rollout_fragment_length=500 → 16 workers × 500 = 8000
+#   per training step (1 SGD round of 10 epochs over 8k samples).
 
 import numpy as np
-import torch
 import gym
 import ray
 from ray import tune
-from ray.rllib.agents.callbacks import DefaultCallbacks
 import soccer_twos
 from soccer_twos import EnvType
 
@@ -120,115 +171,6 @@ class RewardShaperWrapper(gym.core.Wrapper):
 
 
 # ---------------------------------------------------------------------------
-# Opponent curriculum callback
-# ---------------------------------------------------------------------------
-# Stage 0: still opponent   — [0,0,0] per player
-# Stage 1: random opponent  — env.action_space.sample() per player
-# Stage 2: frozen self      — snapshot of current policy weights
-#
-# Note on obs dimensions:
-#   The trained policy takes 672-dim (two players concatenated).
-#   opponent_policy is called per-player with 336-dim obs.
-#   For the frozen-self opponent we tile the obs to fake a 672-dim input
-#   and use only the first player's logits (first 9 of 18 outputs).
-
-STAGE_THRESHOLDS = [0.5, 1.0]  # promote 0→1 at 0.5, 1→2 at 1.0
-
-# Per-player action branches (MultiDiscrete([3,3,3]))
-_SINGLE_PLAYER_BRANCHES = [3, 3, 3]
-
-
-def _find_tvp(env):
-    """Walk the gym wrapper chain to find the TeamVsPolicyWrapper."""
-    while hasattr(env, "env"):
-        if hasattr(env, "set_opponent_policy"):
-            return env
-        env = env.env
-    return env
-
-
-def _make_frozen_opponent(model):
-    """
-    Returns a callable that acts as a frozen-self opponent for a single player.
-
-    The trained policy takes 672-dim team obs and outputs 18 logits
-    (MultiDiscrete [3,3,3,3,3,3]). opponent_policy is called per player
-    with 336-dim obs, so we tile it to 672 and read the first player's
-    action (first 9 logits → branches [3,3,3]).
-    """
-    frozen = copy.deepcopy(model)
-    frozen.eval()
-
-    def opponent(obs, _frozen=frozen):
-        # tile single-player obs to match the team input the policy was trained on
-        team_obs = np.tile(obs, 2).astype(np.float32)  # 336 → 672
-        obs_t = torch.from_numpy(team_obs).unsqueeze(0)
-        with torch.no_grad():
-            logits, _ = _frozen({"obs": obs_t}, [], None)
-        logits_np = logits.cpu().numpy()[0]  # shape [18]
-        # decode first player's branches from first 9 logits
-        action = []
-        offset = 0
-        for n in _SINGLE_PLAYER_BRANCHES:
-            action.append(int(np.argmax(logits_np[offset:offset + n])))
-            offset += n
-        return action
-
-    return opponent
-
-
-class OpponentCurriculumCallback(DefaultCallbacks):
-
-    def __init__(self):
-        super().__init__()
-        self._stage = 0
-
-    def on_train_result(self, *, trainer, result, **_):
-        mean_reward = result["episode_reward_mean"]
-
-        # Guard: NaN means no episodes have completed yet (nan <= x is False
-        # in IEEE 754, so without this check NaN would slip past the threshold
-        # guard and trigger a premature curriculum promotion).
-        if np.isnan(mean_reward):
-            return
-
-        if self._stage >= len(STAGE_THRESHOLDS):
-            return
-        if mean_reward <= STAGE_THRESHOLDS[self._stage]:
-            return
-
-        self._stage += 1
-        stage_name = ["still", "random", "frozen-self"][self._stage]
-        print(f"==== CURRICULUM: promoting to stage {self._stage} ({stage_name}) "
-              f"at reward {mean_reward:.2f} ====")
-
-        if self._stage == 1:
-            # Switch remote workers to random opponent
-            def _set_random(worker):
-                for env in worker.async_env.get_unwrapped():
-                    tvp = _find_tvp(env)
-                    # default-arg captures tvp correctly per loop iteration
-                    tvp.set_opponent_policy(
-                        lambda _obs, _tvp=tvp: _tvp.env.action_space.sample()
-                    )
-
-            for w in trainer.workers.remote_workers():
-                w.apply.remote(_set_random)
-
-        elif self._stage == 2:
-            # Snapshot current policy weights into a frozen model copy
-            def _set_frozen_self(worker):
-                local_policy = worker.policy_map["default_policy"]
-                frozen_fn = _make_frozen_opponent(local_policy.model)
-                for env in worker.async_env.get_unwrapped():
-                    tvp = _find_tvp(env)
-                    tvp.set_opponent_policy(frozen_fn)
-
-            for w in trainer.workers.remote_workers():
-                w.apply.remote(_set_frozen_self)
-
-
-# ---------------------------------------------------------------------------
 # Custom env creator
 # ---------------------------------------------------------------------------
 
@@ -252,7 +194,7 @@ def create_shaped_env(env_config: dict = {}):
 # ---------------------------------------------------------------------------
 
 if __name__ == "__main__":
-    ray.init()
+    ray.init(include_dashboard=False)
 
     tune.registry.register_env("SoccerShaped", create_shaped_env)
 
@@ -263,32 +205,30 @@ if __name__ == "__main__":
             # num_gpus=0: Ray 1.13+torch has a bug where workers crash with
             # IndexError at torch_policy.py:155 when num_gpus>0 on the trainer.
             "num_gpus": 0,
-            "num_workers": 1,
+            "num_workers": 16,
             "num_envs_per_worker": NUM_ENVS_PER_WORKER,
             "log_level": "INFO",
             "framework": "torch",
-            # "disable_env_checking": True,  # not supported in Ray 1.4
-            "callbacks": OpponentCurriculumCallback,
             # RL setup
             "env": "SoccerShaped",
             "env_config": {
                 "num_envs_per_worker": NUM_ENVS_PER_WORKER,
                 "variation": EnvType.team_vs_policy,
                 "multiagent": False,
-                # Stage 0: still opponent — MultiDiscrete([3,3,3]) needs an array
-                "opponent_policy": lambda *_: [0, 0, 0],
+                # Omit opponent_policy → soccer_twos defaults to random opponent
+                # (matches example_ray_team_vs_random.py which trained successfully)
             },
             "model": {
                 "vf_share_layers": True,
                 "fcnet_hiddens": [512, 512],
             },
             "rollout_fragment_length": 500,
-            "train_batch_size": 4000,
+            "train_batch_size": 8000,
             "sgd_minibatch_size": 512,
             "num_sgd_iter": 10,
         },
         stop={
-            "timesteps_total": 4_000_000,
+            "timesteps_total": 20_000_000,
         },
         checkpoint_freq=100,
         checkpoint_at_end=True,
