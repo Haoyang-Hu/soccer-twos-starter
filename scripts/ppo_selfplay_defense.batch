@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Soccer Twos RL Training — Self-Play + Defensive Shaping Batch Script for PACE
+# Author: Haoyang Hu
+# Date: 2026
+
+#SBATCH --job-name=soccer_selfplay_def
+#SBATCH -N1
+#SBATCH --cpus-per-task=24
+#SBATCH --mem=128G
+#SBATCH -t24:00:00
+#SBATCH --output=soccer_selfplay_def-%j.out
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mail-user=hhu349@gatech.edu
+
+module load anaconda3
+conda activate soccertwos
+
+# Algorithm:  PPO (Ray RLlib), frozen self-play + offensive & defensive shaping
+# Script:     ppo_selfplay_defense.py
+# Warm-start: ray_results/PPO_selfplay/.../checkpoint-7500  (HU_PPO3 agent,
+#             60M timesteps, episode_reward_mean ~2.5, 95% win rate vs CEIA
+#             but avg 6.8 goals conceded per match — offense strong, defense weak)
+# Config:     train_batch_size=8000, rollout_fragment_length=500, 16 workers
+#             → 40M additional timesteps (60M → 100M), ~5000 more iterations
+#             Estimated wall time: ~12–14h on PACE ice-cpu
+# Reward:     All 7 offensive terms from ppo_selfplay.py (unchanged) PLUS
+#             3 new defensive terms (active only when ball_x < 0):
+#               8.  Goal-side positioning bonus   (+0.002/step)
+#               9.  Clearance bonus              (+0.003 × max(0, ball_vx))
+#               10. Defensive proximity bonus    (+0.002 × max(0, 1 − dist/10))
+# Opponent:   Frozen numpy snapshot of current policy, refreshed every 200 iters
+# Results:    ray_results/PPO_selfplay_defense/PPO_SoccerSelfPlayDef_<trial_id>/
+#               progress.csv      — per-iteration metrics
+#               result.json       — full result log
+#               checkpoint_<N>/   — saved every 200 iterations
+python ppo_selfplay_defense.py

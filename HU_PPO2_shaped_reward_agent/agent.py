@@ -41,6 +41,7 @@ class HU_PPO2_ShapedRewardAgent(AgentInterface):
 
     def __init__(self, env: gym.Env):
         super().__init__()
+        self.name = "PPO2_shaped_reward"
         ray.init(ignore_reinit_error=True)
 
         config_dir = os.path.dirname(CHECKPOINT_PATH)

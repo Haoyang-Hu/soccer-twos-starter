@@ -33,6 +33,7 @@ class HU_PPO1_BaselineAgent(AgentInterface):
 
     def __init__(self, env: gym.Env):
         super().__init__()
+        self.name = "PPO1_baseline"
         ray.init(ignore_reinit_error=True)
 
         config_dir = os.path.dirname(CHECKPOINT_PATH)
