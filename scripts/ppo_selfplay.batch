@@ -1,0 +1,31 @@
+#!/bin/bash
+
+# Soccer Twos RL Training — PPO Self-Play (warm-started from pretrained)
+# Author: Haoyang Hu
+# Date: 2026-04-17
+
+#SBATCH --job-name=soccer_selfplay
+#SBATCH -N1
+#SBATCH --cpus-per-task=24
+#SBATCH --mem=128G
+#SBATCH -t16:00:00
+#SBATCH --output=soccer_selfplay-%j.out
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mail-user=hhu349@gatech.edu
+
+module load anaconda3
+conda activate soccertwos
+
+# Algorithm: PPO (Ray RLlib) self-play, warm-started from PPO_shaped checkpoint
+# Script:    ppo_selfplay.py
+# Pretrain:  ray_results/PPO_shaped/.../checkpoint_002500 (mean ~1.6 vs random)
+# Config:    train_batch_size=8000, rollout_fragment_length=500, 16 workers
+#            → 5000 additional iterations, 60M total timesteps (~12h wall time)
+# Self-play: frozen opponent refreshed every 200 iters (always ~200 iters behind)
+# Shaping:   ball-toward-goal (+0.01), ball-zone (+0.002),
+#            chase-ball (+0.003), stillness-penalty (-0.001)
+# Results:   ray_results/PPO_selfplay/PPO_SoccerSelfPlay_<trial_id>/
+#              progress.csv      — per-iteration metrics
+#              result.json       — full result log
+#              checkpoint_<N>/   — saved every 200 iterations
+python ppo_selfplay.py

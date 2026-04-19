@@ -21,8 +21,11 @@ conda activate soccertwos
 
 # Algorithm: PPO (Ray RLlib) with shaped rewards vs random opponent
 # Script:    ppo_random_reward.py
+# Agent:     HU_PPO2_shaped_reward_agent/
 # Config:    train_batch_size=8000, rollout_fragment_length=500, 16 workers
 #            → 2500 iterations to reach 20M timesteps (~6h wall time on PACE ice-cpu)
+# Reward:    sparse ±2 goal + ball-toward-goal (+0.005) + ball-zone (+0.002)
+#            + stillness-penalty (-0.001)
 # Results:   ray_results/PPO_shaped/PPO_SoccerShaped_<trial_id>/
 #              progress.csv      — per-iteration metrics
 #              result.json       — full result log
