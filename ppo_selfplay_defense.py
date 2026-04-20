@@ -333,7 +333,7 @@ if __name__ == "__main__":
             # Checkpoint restores timesteps_total to ~60M; run 40M more = 100M total
             "timesteps_total": 100_000_000,
         },
-        checkpoint_freq=200,
+        checkpoint_freq=500,
         checkpoint_at_end=True,
         local_dir="./ray_results",
     )

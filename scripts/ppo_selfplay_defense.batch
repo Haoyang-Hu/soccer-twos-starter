@@ -8,7 +8,7 @@
 #SBATCH -N1
 #SBATCH --cpus-per-task=24
 #SBATCH --mem=128G
-#SBATCH -t24:00:00
+#SBATCH -t16:00:00
 #SBATCH --output=soccer_selfplay_def-%j.out
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=hhu349@gatech.edu
