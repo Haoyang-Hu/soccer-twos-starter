@@ -19,7 +19,7 @@ CHECKPOINT_PATH = os.path.join(
 POLICY_NAME = "default_policy"
 
 
-class HU_PPO1_BaselineAgent(AgentInterface):
+class PPO1BaselineAgent(AgentInterface):
     """
     Baseline PPO agent trained with example_ray_team_vs_random.py.
 

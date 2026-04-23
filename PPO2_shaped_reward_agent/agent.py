@@ -19,11 +19,11 @@ CHECKPOINT_PATH = os.path.join(
 POLICY_NAME = "default_policy"
 
 
-class HU_PPO2_ShapedRewardAgent(AgentInterface):
+class PPO2ShapedRewardAgent(AgentInterface):
     """
     PPO agent trained with ppo_random_reward.py — dense shaped rewards vs random opponent.
 
-    Compared to the baseline (HU_PPO1), this agent adds three dense shaping terms
+    Compared to the baseline (PPO1), this agent adds three dense shaping terms
     on top of the sparse ±2 goal signal to accelerate learning:
       +0.005 × Δball_x   — ball moving toward opponent goal (potential-based)
       +0.002 × ball_x/17 — ball in attacking half positional bonus

@@ -1,14 +1,14 @@
-# HU PPO3 Self-Play Agent
+# PPO3 Self-Play Agent
 
 **Agent name:** PPO3SelfPlayAgent
 
 ## Description
 
-PPO agent trained with `ppo_selfplay.py` using **frozen self-play** as the opponent and an enhanced 7-term dense reward shaping scheme. The agent is warm-started from the shaped-reward random-opponent checkpoint (HU_PPO2, ~20 M steps) and then trained against a frozen snapshot of its own policy for a further ~40 M steps. The snapshot is refreshed every 200 training iterations, creating an arms race where the agent must keep improving to stay ahead of its past self.
+PPO agent trained with `ppo_selfplay.py` using **frozen self-play** as the opponent and an enhanced 7-term dense reward shaping scheme. The agent is warm-started from the shaped-reward random-opponent checkpoint (PPO2, ~20 M steps) and then trained against a frozen snapshot of its own policy for a further ~40 M steps. The snapshot is refreshed every 200 training iterations, creating an arms race where the agent must keep improving to stay ahead of its past self.
 
 - **Training script:** `ppo_selfplay.py`
 - **Opponent:** Frozen self (numpy MLP snapshot updated every 200 iters)
-- **Warm-start:** HU_PPO2 shaped-reward checkpoint (PPO_shaped/checkpoint-2500)
+- **Warm-start:** PPO2 shaped-reward checkpoint (PPO_shaped/checkpoint-2500)
 - **Reward:** Sparse ±2 goal signal + 7 dense shaping terms:
   - `+0.010 × Δball_x` — ball moves toward opponent goal (potential-based)
   - `+0.002 × ball_x/17` — ball in attacking half positional bonus

@@ -1,22 +1,29 @@
-# HU_PPO3_selfplay_agent/agent.py
+# PPO4_defense_agent/agent.py
 #
-# Loads a PPO policy trained with ppo_selfplay.py and exposes it as an
+# Loads a PPO policy trained with ppo_selfplay_defense.py and exposes it as an
 # AgentInterface for soccer-twos evaluation and competition.
 #
 # ============================================================================
 # TRAINING OVERVIEW
 # ============================================================================
-# Script:      ppo_selfplay.py
-# Warm-start:  HU_PPO2 shaped-reward checkpoint (PPO_shaped/checkpoint-2500,
-#              trained ~20 M steps vs random opponent)
-# Opponent:    Frozen self — a pure-numpy snapshot of the current policy
-#              deployed to all workers and refreshed every 200 training iters.
-#              This creates an arms race: the agent must keep improving to beat
-#              its own recent past, preventing the plateau that occurs with a
-#              fixed random opponent.
-# Total steps: 60 M timesteps (7500 iterations @ train_batch_size=8000)
-# Final mean:  episode_reward_mean ≈ 2.50  (near the +2 single-goal ceiling,
-#              with shaping adding up to ~0.5 per episode)
+# Script:      ppo_selfplay_defense.py
+# Warm-start:  PPO3 self-play checkpoint (PPO_selfplay/checkpoint-7500,
+#              60 M steps, mean reward ~2.50, 95 % win rate vs CEIA but
+#              avg 6.8 goals conceded — offense strong, defense weak)
+# Opponent:    Frozen self — numpy snapshot refreshed every 200 training iters,
+#              same as ppo_selfplay.py
+# Total steps: 100 M timesteps (12500 iterations @ train_batch_size=8000;
+#              60 M inherited + 40 M new)
+# Final mean:  episode_reward_mean ≈ 2.53
+#
+# ============================================================================
+# MOTIVATION FOR THIS AGENT
+# ============================================================================
+# Evaluation of PPO3 vs CEIA showed 95 % win rate but avg 6.8 goals
+# conceded per match (most games 11–13 rather than 11–2). The agent attacked
+# relentlessly but left its own half unguarded. This agent adds three
+# defensive reward terms to fix that, while keeping every offensive term
+# from PPO3 unchanged so scoring ability is not degraded.
 #
 # ============================================================================
 # AGENT STRUCTURE  (team_vs_policy, multiagent=False)
@@ -35,16 +42,24 @@
 # per-player dicts: {0: action[:3], 1: action[3:]}.
 #
 # ============================================================================
-# REWARD SHAPING  (7 dense terms on top of sparse ±2 goal signal)
+# REWARD SHAPING  (10 terms total)
 # ============================================================================
+# OFFENSIVE (terms 1–7, inherited unchanged from ppo_selfplay.py):
 #   +0.010 × Δball_x           ball moves toward opponent goal  (potential)
 #   +0.002 × ball_x / 17       zone bonus when ball in attacking half
 #   +0.003 × Δdist(p0 → ball)  player 0 chasing ball           (potential)
-#   +0.003 × Δdist(p1 → ball)  player 1 chasing ball           (potential)
-#   +0.002 × ball_vx            ball velocity toward opponent goal
-#   +0.005                      extra bonus within 5 m of opponent goal line
 #   -0.001 / step               stillness penalty  (speed < 0.1 m/s)
-#   -0.002                      danger-zone penalty when ball is deep in own half
+#   +0.002 × max(0, ball_vx)    ball velocity toward opponent goal
+#   +0.005 × max(0,(ball_x−12)/5)  goal-zone amplifier (final 5 m)
+#   -0.002 × max(0,(−ball_x−10)/7) danger-zone penalty (deep in own half)
+#
+# DEFENSIVE (terms 8–10, NEW — only active when ball_x < 0):
+#   +0.002                     goal-side positioning: player between ball
+#                               and own goal (px < ball_x in own half)
+#   +0.003 × max(0, ball_vx)   clearance bonus: ball moving toward +x
+#                               while in own half (amplifies term 5)
+#   +0.002 × max(0,1−dist/10)  defensive proximity: reward closing down
+#                               ball-holder in own half
 #
 # ============================================================================
 # CHECKPOINT LOADING
@@ -52,7 +67,7 @@
 # Ray 1.13 stores checkpoint weights at ckpt["worker"]["state"][policy_name],
 # NOT at the "weights" key that agent.restore() expects.  We therefore load
 # the pickle manually and call policy.set_weights() directly — the same
-# pattern used in ceia_baseline_agent/agent_ray.py.
+# pattern used in ceia_baseline_agent/agent_ray.py and all PPO agents.
 #
 # A DummyEnv is registered to give RLlib the correct observation/action spaces
 # without spawning a real Unity binary during evaluation.
@@ -73,16 +88,16 @@ from soccer_twos import AgentInterface
 ALGORITHM = "PPO"
 CHECKPOINT_PATH = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
-    "ray_results/PPO_selfplay/checkpoint-7500",
+    "ray_results/PPO_selfplay_defense/checkpoint-12500",
 )
 POLICY_NAME = "default_policy"
 
 
-class PPO3SelfPlayAgent(AgentInterface):
+class PPO4DefenseAgent(AgentInterface):
 
     def __init__(self, env: gym.Env):
         super().__init__()
-        self.name = "PPO3_selfplay"
+        self.name = "PPO4_defense"
         ray.init(ignore_reinit_error=True)
 
         config_dir = os.path.dirname(CHECKPOINT_PATH)

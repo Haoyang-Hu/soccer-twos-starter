@@ -1,10 +1,10 @@
-# HU PPO2 Shaped Reward Agent
+# PPO2 Shaped Reward Agent
 
-**Agent name:** HU_PPO2_ShapedReward
+**Agent name:** PPO2_ShapedReward
 
 ## Description
 
-PPO agent trained with `ppo_random_reward.py` against a random opponent with **dense reward shaping** added on top of the sparse goal signal. The shaping terms guide the agent to move the ball toward the opponent goal, maintain ball possession in the attacking half, and avoid idling — accelerating learning compared to the sparse-only baseline (HU_PPO1).
+PPO agent trained with `ppo_random_reward.py` against a random opponent with **dense reward shaping** added on top of the sparse goal signal. The shaping terms guide the agent to move the ball toward the opponent goal, maintain ball possession in the attacking half, and avoid idling — accelerating learning compared to the sparse-only baseline (PPO1).
 
 - **Training script:** `ppo_random_reward.py`
 - **Opponent:** Random (uniform MultiDiscrete([3,3,3]) per player)

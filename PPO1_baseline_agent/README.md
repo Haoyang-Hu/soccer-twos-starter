@@ -1,6 +1,6 @@
-# HU PPO1 Baseline Agent
+# PPO1 Baseline Agent
 
-**Agent name:** HU_PPO1_Baseline
+**Agent name:** PPO1_Baseline
 
 ## Description
 
